@@ -88,12 +88,20 @@ const handleLiElements = (lis, muts, observr) => {
 }
 
 // callback executed when canvas was found
-const handleSectionElmt = (elmt) => {
-    observer2.observe(document, {
-        attributes: true,
-        childList: true,
-        subtree: true
-    });
+const handleSectionElmt = (elmtID) => {
+    if (elmtID=='#archival_object_instances_') {
+        observer2.observe(document, {
+            attributes: true,
+            childList: true,
+            subtree: true
+        });
+    } else if (elmtID=='#resource_instances_') {
+        observer3.observe(document, {
+            attributes: true,
+            childList: true,
+            subtree: true
+        });
+    }
 }
 
 // set up the mutation observer
@@ -101,18 +109,47 @@ var observer1 = new MutationObserver(function (mutations, me) {
     // `mutations` is an array of mutations that occurred
     // `me` is the MutationObserver instance
     var instancesSection = document.querySelector('#archival_object_instances_'); //document.getElementById('archival_object_instances_');
+    var instancesSection2 = document.querySelector('#resource_instances_');  // covers the case of a Record Group
     if (instancesSection) {
-        handleSectionElmt(instancesSection);
+        handleSectionElmt('#archival_object_instances_');
+        me.disconnect(); // stop observing
+        return;
+    } else if (instancesSection2) {
+        handleSectionElmt('#resource_instances_');
         me.disconnect(); // stop observing
         return;
     }
 });
 
 const observer2 = new MutationObserver(function (mutations, me) {
-    const lis = document.getElementById('archival_object_instances_').getElementsByClassName('token-input-dropdown-item');
-    if (lis) {
-        handleLiElements(lis, mutations, me);
-        return;
+    try {
+        const lis = document.getElementById('archival_object_instances_').getElementsByClassName('token-input-dropdown-item');
+        if (lis) {
+            handleLiElements(lis, mutations, me);
+            return;
+        }
+    } catch (e) {
+        me.disconnect();
+        observer1.observe(document, {
+            childList: true,
+            subtree: true
+        });
+    }
+});
+
+const observer3 = new MutationObserver(function (mutations, me) {
+    try {
+        const lis = document.getElementById('resource_instances_').getElementsByClassName('token-input-dropdown-item');
+        if (lis) {
+            handleLiElements(lis, mutations, me);
+            return;
+        }
+    } catch (e) {
+        me.disconnect();
+        observer1.observe(document, {
+            childList: true,
+            subtree: true
+        });
     }
 });
 
